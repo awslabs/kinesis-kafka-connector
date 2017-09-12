@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
 
@@ -31,6 +32,8 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 	public static final String AGGREGRATION_ENABLED = "aggregration";
 
 	public static final String USE_PARTITION_AS_HASH_KEY = "usePartitionAsHashKey";
+
+	private static final String VERSION = "0.11.0.0";
 
 	private String region;
 
@@ -145,8 +148,14 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 
 	@Override
 	public String version() {
-		// TODO Auto-generated method stub
-		return null;
+		return VERSION;
+	}
+
+	@Override
+	public ConfigDef config() {
+		//TBD: empty conf
+		return new ConfigDef();
+		
 	}
 
 }

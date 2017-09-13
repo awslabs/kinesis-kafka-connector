@@ -5,13 +5,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.utils.AppInfoParser;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
 
 public class FirehoseSinkConnector extends SinkConnector {
 
-		
 	public static final String DELIVERY_STREAM = "deliveryStream";
 	
 	public static final String REGION = "region";
@@ -90,6 +90,11 @@ public class FirehoseSinkConnector extends SinkConnector {
 	public String version() {
 		// Currently using Kafka version, in future release use Kinesis-Kafka version
 		return AppInfoParser.getVersion();
+	}
+
+	@Override
+	public ConfigDef config() {
+		return new ConfigDef();
 	}
 
 }

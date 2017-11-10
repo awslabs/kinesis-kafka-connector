@@ -38,7 +38,7 @@ You can build the project by running "maven package" and it will build amazon-ki
 | name     | User defined name of connector  | - |
 | connector.class      | Class for Amazon Kinesis Firehose Connector      |   com.amazon.kinesis.kafka.FirehoseSinkConnector |
 | topics | Kafka topics from where you want to consume messages. It can be single topic or comma separated list of topics      |   -  |
-| regions| Specify region of your Kinesis Firehose | - |
+| region| Specify region of your Kinesis Firehose | - |
 | batch | Connector batches messages before sending to Kinesis Firehose (true/false) | true |
 | batchSize | Number of messages to be batched together. Firehose accepts at max 500 messages in one batch. | 500 |
 | batchSizeInBytes | Message size in bytes when batched together. Firehose accepts at max 4MB in one batch. | 3670016 |
@@ -71,7 +71,7 @@ You can build the project by running "maven package" and it will build amazon-ki
 | name     | User defined name of connector  | - |
 | connector.class      | Class for Amazon Kinesis Stream Connector      |   com.amazon.kinesis.kafka.AmazonKinesisSinkConnector |
 | topics | Kafka topics from where you want to consume messages. It can be single topic or comma separated list of topics      |   -  |
-| regions| Specify region of your Kinesis Firehose | - |
+| region| Specify region of your Kinesis Firehose | - |
 | streamName | Kinesis Stream Name.| - |
 | usePartitionAsHashKey | Using Kafka partition key as hash key for Kinesis streams.  | false |
 | maxBufferedTime | Maximum amount of time (milliseconds) a record may spend being buffered before it gets sent. Records may be sent sooner than this depending on the other buffering limits. Range: [100..... 9223372036854775807] | 15000 |

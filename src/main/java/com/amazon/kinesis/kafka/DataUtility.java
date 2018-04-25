@@ -4,8 +4,10 @@ import java.io.UnsupportedEncodingException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import com.google.gson.Gson;
 
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Schema.Type;
@@ -106,9 +108,64 @@ public class DataUtility {
 	}
 
 	/**
+	 * Parses Kafka Values
+	 * 
+	 * @param value
+	 *            - Value of the message
+	 * @return Parsed bytebuffer as per schema type
+	 */
+	public static ByteBuffer parseValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            ByteBuffer longBuf = ByteBuffer.allocate(8);
+			longBuf.putLong((Long) value);
+			return longBuf;
+        }
+        if (value instanceof Boolean) {
+            ByteBuffer boolBuffer = ByteBuffer.allocate(1);
+			boolBuffer.put((byte) ((Boolean) value ? 1 : 0));
+			return boolBuffer;
+        }
+        if (value instanceof String) {
+            try {
+				return ByteBuffer.wrap(((String) value).getBytes("UTF-8"));
+			} catch (UnsupportedEncodingException e) {
+				System.out.println("Message cannot be translated:" + e.getLocalizedMessage());
+			}
+		}
+		if(value instanceof HashMap) {		
+			Gson gson = new Gson();
+			
+			String json = gson.toJson(value); 
+			return parseValue(json);
+		}
+        if (value instanceof byte[] || value instanceof ByteBuffer) {
+            if (value instanceof byte[])
+				return ByteBuffer.wrap((byte[]) value);
+			else if (value instanceof ByteBuffer)
+				return (ByteBuffer) value;
+        }
+		System.out.println("Unsupported value type: " + value.getClass());
+		return null;
+	}
+
+	/**
 	 * Converts Kafka record into Kinesis record
 	 * 
-	 * @param sinkRecord
+	 * @param sinkRecord			// ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+			// try {
+    		// 	ObjectOutputStream out = new ObjectOutputStream(byteOut);
+			// 	out.writeObject(value);
+			// 
+			// 	ByteBuffer buffer = ByteBuffer.wrap(byteOut.toByteArray());
+			// 	return buffer;
+			// }catch(IOException e) {
+			// 	System.out.println("HashMap Error: " + e.toString());
+			// }
+// 
+			// return null;
 	 *            Kafka unit of message
 	 * @return Kinesis unit of message
 	 */

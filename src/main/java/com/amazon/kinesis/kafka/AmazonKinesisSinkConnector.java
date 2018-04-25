@@ -46,6 +46,8 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 	
 	public static final String SLEEP_CYCLES = "sleepCycles";
 
+	public static final String SCHEMA_ENABLE = "schemaEnable";
+
 	private String region;
 
 	private String streamName;
@@ -80,6 +82,8 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 	
 	private String sleepCycles;
 
+	private String schemaEnable;
+
 	@Override
 	public void start(Map<String, String> props) {
 		region = props.get(REGION);
@@ -99,6 +103,7 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 		outstandingRecordsThreshold = props.get(OUTSTANDING_RECORDS_THRESHOLD);
 		sleepPeriod = props.get(SLEEP_PERIOD);
 		sleepCycles = props.get(SLEEP_CYCLES);
+		schemaEnable = props.get(SCHEMA_ENABLE);
 	}
 
 	@Override
@@ -198,7 +203,12 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 				config.put(SLEEP_CYCLES, sleepCycles);
 			else
 				config.put(SLEEP_CYCLES, "10");
-			
+
+			if(schemaEnable != null)
+				config.put(SCHEMA_ENABLE, schemaEnable);
+			else
+				config.put(SCHEMA_ENABLE, "true");
+
 			configs.add(config);
 
 		}

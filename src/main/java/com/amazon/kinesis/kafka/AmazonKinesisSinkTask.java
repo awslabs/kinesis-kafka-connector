@@ -58,6 +58,8 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	private int sleepCycles;
 
+	private boolean schemaEnable;
+
 	private SinkTaskContext sinkTaskContext;
 
 	private Map<String, KinesisProducer> producerMap = new HashMap<String, KinesisProducer>();
@@ -216,12 +218,20 @@ public class AmazonKinesisSinkTask extends SinkTask {
 		// If configured use kafka partition key as explicit hash key
 		// This will be useful when sending data from same partition into
 		// same shard
-		if (usePartitionAsHashKey)
-			return kp.addUserRecord(streamName, partitionKey, Integer.toString(sinkRecord.kafkaPartition()),
-					DataUtility.parseValue(sinkRecord.valueSchema(), sinkRecord.value()));
-		else
-			return kp.addUserRecord(streamName, partitionKey,
-					DataUtility.parseValue(sinkRecord.valueSchema(), sinkRecord.value()));
+		if (schemaEnable) {
+			if (usePartitionAsHashKey)
+				return kp.addUserRecord(streamName, partitionKey, Integer.toString(sinkRecord.kafkaPartition()),
+						DataUtility.parseValue(sinkRecord.valueSchema(), sinkRecord.value()));
+			else
+				return kp.addUserRecord(streamName, partitionKey,
+						DataUtility.parseValue(sinkRecord.valueSchema(), sinkRecord.value()));
+		} else {
+			if (usePartitionAsHashKey)
+				return kp.addUserRecord(streamName, partitionKey, Integer.toString(sinkRecord.kafkaPartition()),
+						DataUtility.parseValue(sinkRecord.value()));
+			else
+				return kp.addUserRecord(streamName, partitionKey, DataUtility.parseValue(sinkRecord.value()));
+		}
 
 	}
 
@@ -263,6 +273,8 @@ public class AmazonKinesisSinkTask extends SinkTask {
 		sleepPeriod = Integer.parseInt(props.get(AmazonKinesisSinkConnector.SLEEP_PERIOD));
 
 		sleepCycles = Integer.parseInt(props.get(AmazonKinesisSinkConnector.SLEEP_CYCLES));
+
+		schemaEnable = Boolean.parseBoolean(props.get(AmazonKinesisSinkConnector.SCHEMA_ENABLE));
 
 		if (!singleKinesisProducerPerPartition)
 			kinesisProducer = getKinesisProducer();

@@ -1,27 +1,21 @@
 package com.amazon.kinesis.kafka;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider;
+import com.amazonaws.regions.RegionUtils;
+import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehoseClient;
+import com.amazonaws.services.kinesisfirehose.model.*;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.regions.RegionUtils;
-import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehoseClient;
-import com.amazonaws.services.kinesisfirehose.model.AmazonKinesisFirehoseException;
-import com.amazonaws.services.kinesisfirehose.model.DescribeDeliveryStreamRequest;
-import com.amazonaws.services.kinesisfirehose.model.DescribeDeliveryStreamResult;
-import com.amazonaws.services.kinesisfirehose.model.PutRecordBatchRequest;
-import com.amazonaws.services.kinesisfirehose.model.PutRecordBatchResult;
-import com.amazonaws.services.kinesisfirehose.model.PutRecordRequest;
-import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
-import com.amazonaws.services.kinesisfirehose.model.Record;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author nehalmeh
@@ -38,6 +32,10 @@ public class FirehoseSinkTask extends SinkTask {
 	private int batchSize;
 	
 	private int batchSizeInBytes;
+
+	private String producerRole;
+
+	private String stsSessionName;
 
 	@Override
 	public String version() {
@@ -69,9 +67,11 @@ public class FirehoseSinkTask extends SinkTask {
 		
 		deliveryStreamName = props.get(FirehoseSinkConnector.DELIVERY_STREAM);
 
-		firehoseClient = new AmazonKinesisFirehoseClient(new DefaultAWSCredentialsProviderChain());
+		producerRole = props.get(AmazonKinesisSinkConnector.PRODUCER_ROLE);
 
-		firehoseClient.setRegion(RegionUtils.getRegion(props.get(FirehoseSinkConnector.REGION)));
+		stsSessionName = props.get(AmazonKinesisSinkConnector.STS_SESSION_NAME);
+
+		firehoseClient = new AmazonKinesisFirehoseClient(getCredentialsProvider());
 
 		// Validate delivery stream
 		validateDeliveryStream();
@@ -79,7 +79,7 @@ public class FirehoseSinkTask extends SinkTask {
 
 	@Override
 	public void stop() {
-
+		firehoseClient.shutdown();
 	}
 
 
@@ -172,5 +172,12 @@ public class FirehoseSinkTask extends SinkTask {
 				 System.out.println("Connector Exception" + e.getLocalizedMessage());
 			}
 		}
+	}
+
+	private AWSCredentialsProvider getCredentialsProvider() {
+		if (producerRole == null) {
+			return new DefaultAWSCredentialsProviderChain();
+		}
+		return new STSAssumeRoleSessionCredentialsProvider.Builder(producerRole, stsSessionName).build();
 	}
 }

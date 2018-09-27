@@ -1,19 +1,18 @@
 package com.amazon.kinesis.kafka;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-
+import com.amazonaws.services.kinesisfirehose.model.Record;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Schema.Type;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.sink.SinkRecord;
 
-import com.amazonaws.services.kinesisfirehose.model.Record;
+import java.io.UnsupportedEncodingException;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 public class DataUtility {
 

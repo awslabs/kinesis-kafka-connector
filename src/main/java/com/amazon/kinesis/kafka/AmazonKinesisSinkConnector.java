@@ -1,16 +1,18 @@
 package com.amazon.kinesis.kafka;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.utils.AppInfoParser;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class AmazonKinesisSinkConnector extends SinkConnector {
+
+	public static final String STS_SESSION_NAME_DEFAULT = "AmazonKinesisSink";
 
 	public static final String REGION = "region";
 
@@ -46,6 +48,10 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 	
 	public static final String SLEEP_CYCLES = "sleepCycles";
 
+	public static final String PRODUCER_ROLE = "producerRole";
+
+	public static final String STS_SESSION_NAME = "stsSessionName";
+
 	private String region;
 
 	private String streamName;
@@ -80,6 +86,10 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 	
 	private String sleepCycles;
 
+	private String producerRole;
+
+	private String stsSessionName;
+
 	@Override
 	public void start(Map<String, String> props) {
 		region = props.get(REGION);
@@ -99,6 +109,8 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 		outstandingRecordsThreshold = props.get(OUTSTANDING_RECORDS_THRESHOLD);
 		sleepPeriod = props.get(SLEEP_PERIOD);
 		sleepCycles = props.get(SLEEP_CYCLES);
+		producerRole = props.get(PRODUCER_ROLE);
+		stsSessionName = props.getOrDefault(STS_SESSION_NAME, STS_SESSION_NAME_DEFAULT);
 	}
 
 	@Override
@@ -198,9 +210,14 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 				config.put(SLEEP_CYCLES, sleepCycles);
 			else
 				config.put(SLEEP_CYCLES, "10");
+
+			if (producerRole != null)
+				config.put(PRODUCER_ROLE, producerRole);
+
+			if (stsSessionName != null)
+				config.put(STS_SESSION_NAME, stsSessionName);
 			
 			configs.add(config);
-
 		}
 		return configs;
 	}
@@ -217,5 +234,4 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 		// TODO Auto-generated method stub
 		return new ConfigDef();
 	}
-
 }

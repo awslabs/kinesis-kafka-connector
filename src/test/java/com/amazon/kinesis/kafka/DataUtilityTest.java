@@ -1,11 +1,12 @@
 package com.amazon.kinesis.kafka;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
-import org.testng.annotations.Test;
 import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 
 public class DataUtilityTest {
 	

@@ -1,9 +1,13 @@
 package com.amazon.kinesis.kafka;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider;
+import com.amazonaws.services.kinesis.producer.*;
+import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.errors.DataException;
@@ -11,16 +15,9 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.apache.kafka.connect.sink.SinkTaskContext;
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.services.kinesis.producer.Attempt;
-import com.amazonaws.services.kinesis.producer.KinesisProducer;
-import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration;
-import com.amazonaws.services.kinesis.producer.UserRecordFailedException;
-import com.amazonaws.services.kinesis.producer.UserRecordResult;
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AmazonKinesisSinkTask extends SinkTask {
 
@@ -58,6 +55,10 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	private int sleepCycles;
 
+	private String producerRole;
+
+	private String stsSessionName;
+
 	private SinkTaskContext sinkTaskContext;
 
 	private Map<String, KinesisProducer> producerMap = new HashMap<String, KinesisProducer>();
@@ -94,7 +95,6 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	@Override
 	public void flush(Map<TopicPartition, OffsetAndMetadata> arg0) {
-		// TODO Auto-generated method stub
 		if (singleKinesisProducerPerPartition) {
 			producerMap.values().forEach(producer -> {
 				if (flushSync)
@@ -264,6 +264,11 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		sleepCycles = Integer.parseInt(props.get(AmazonKinesisSinkConnector.SLEEP_CYCLES));
 
+		producerRole = props.get(AmazonKinesisSinkConnector.PRODUCER_ROLE);
+
+		stsSessionName = props.get(AmazonKinesisSinkConnector.STS_SESSION_NAME);
+
+
 		if (!singleKinesisProducerPerPartition)
 			kinesisProducer = getKinesisProducer();
 
@@ -303,7 +308,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	private KinesisProducer getKinesisProducer() {
 		KinesisProducerConfiguration config = new KinesisProducerConfiguration();
 		config.setRegion(regionName);
-		config.setCredentialsProvider(new DefaultAWSCredentialsProviderChain());
+		config.setCredentialsProvider(getCredentialsProvider());
 		config.setMaxConnections(maxConnections);
 
 		config.setAggregationEnabled(aggregration);
@@ -338,6 +343,13 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		return new KinesisProducer(config);
 
+	}
+
+	private AWSCredentialsProvider getCredentialsProvider() {
+		if (producerRole == null) {
+			return new DefaultAWSCredentialsProviderChain();
+		}
+		return new STSAssumeRoleSessionCredentialsProvider.Builder(producerRole, stsSessionName).build();
 	}
 
 }

@@ -1,16 +1,18 @@
 package com.amazon.kinesis.kafka;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.utils.AppInfoParser;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class FirehoseSinkConnector extends SinkConnector {
+
+	public static final String STS_SESSION_NAME_DEFAULT = "AmazonKinesisSink";
 
 	public static final String DELIVERY_STREAM = "deliveryStream";
 	
@@ -30,7 +32,15 @@ public class FirehoseSinkConnector extends SinkConnector {
 	
 	private String batchSize;
 	
-	private String batchSizeInBytes; 
+	private String batchSizeInBytes;
+
+	private String producerRole;
+
+    private String stsSessionName;
+
+    public static final String PRODUCER_ROLE = "producerRole";
+
+    public static final String STS_SESSION_NAME = "stsSessionName";
 	
 	private final String MAX_BATCH_SIZE = "500";
 	
@@ -44,6 +54,8 @@ public class FirehoseSinkConnector extends SinkConnector {
 		batch = props.get(BATCH);	
 		batchSize = props.get(BATCH_SIZE);
 		batchSizeInBytes = props.get(BATCH_SIZE_IN_BYTES);
+        producerRole = props.get(PRODUCER_ROLE);
+        stsSessionName = props.getOrDefault(STS_SESSION_NAME, STS_SESSION_NAME_DEFAULT);
 	}
 
 	@Override
@@ -80,7 +92,11 @@ public class FirehoseSinkConnector extends SinkConnector {
 				config.put(BATCH_SIZE_IN_BYTES,  batchSizeInBytes);
 			else 
 				config.put(BATCH_SIZE_IN_BYTES, MAX_BATCH_SIZE_IN_BYTES);
-			
+
+            if (producerRole != null)
+                config.put(PRODUCER_ROLE, producerRole);
+            if (stsSessionName != null)
+                config.put(STS_SESSION_NAME, stsSessionName);
 			configs.add(config);
 		}
 		return configs;

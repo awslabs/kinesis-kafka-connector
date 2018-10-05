@@ -14,12 +14,15 @@ import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.apache.kafka.connect.sink.SinkTaskContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AmazonKinesisSinkTask extends SinkTask {
+	private static final Logger LOG = LoggerFactory.getLogger(DataUtility.class);
 
 	private String streamName;
 
@@ -122,7 +125,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		String partitionKey;
 		for (SinkRecord sinkRecord : sinkRecords) {
-
+			LOG.info("Putting sink record: {}", sinkRecord);
 			ListenableFuture<UserRecordResult> f;
 			// Kinesis does not allow empty partition key
 			if (sinkRecord.key() != null && !sinkRecord.key().toString().trim().equals("")) {

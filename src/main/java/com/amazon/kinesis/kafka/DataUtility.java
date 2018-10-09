@@ -154,18 +154,7 @@ public class DataUtility {
 	/**
 	 * Converts Kafka record into Kinesis record
 	 * 
-	 * @param sinkRecord			// ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-			// try {
-    		// 	ObjectOutputStream out = new ObjectOutputStream(byteOut);
-			// 	out.writeObject(value);
-			// 
-			// 	ByteBuffer buffer = ByteBuffer.wrap(byteOut.toByteArray());
-			// 	return buffer;
-			// }catch(IOException e) {
-			// 	System.out.println("HashMap Error: " + e.toString());
-			// }
-// 
-			// return null;
+	 * @param sinkRecord
 	 *            Kafka unit of message
 	 * @return Kinesis unit of message
 	 */

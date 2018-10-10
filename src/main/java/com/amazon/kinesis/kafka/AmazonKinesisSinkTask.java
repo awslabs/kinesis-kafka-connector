@@ -1,5 +1,7 @@
 package com.amazon.kinesis.kafka;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,8 +12,13 @@ import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.apache.kafka.connect.sink.SinkTaskContext;
+import org.apache.kafka.connect.storage.Converter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider;
 import com.amazonaws.services.kinesis.producer.Attempt;
 import com.amazonaws.services.kinesis.producer.KinesisProducer;
 import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration;
@@ -23,48 +30,33 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class AmazonKinesisSinkTask extends SinkTask {
+	private static final Logger LOG = LoggerFactory.getLogger(DataUtility.class);
 
 	private String streamName;
-
 	private String regionName;
-
 	private int maxConnections;
-
 	private int rateLimit;
-
 	private int maxBufferedTime;
-
 	private int ttl;
-
 	private String metricsLevel;
-
 	private String metricsGranuality;
-
 	private String metricsNameSpace;
-
 	private boolean aggregration;
-
 	private boolean usePartitionAsHashKey;
-
 	private boolean flushSync;
-
 	private boolean singleKinesisProducerPerPartition;
-
 	private boolean pauseConsumption;
-
 	private int outstandingRecordsThreshold;
-
 	private int sleepPeriod;
-
 	private int sleepCycles;
-
+	private String producerRole;
+	private String stsSessionName;
 	private SinkTaskContext sinkTaskContext;
-
 	private Map<String, KinesisProducer> producerMap = new HashMap<String, KinesisProducer>();
-
 	private KinesisProducer kinesisProducer;
+	private Converter converter;
 
-	final FutureCallback<UserRecordResult> callback = new FutureCallback<UserRecordResult>() {
+	private static final FutureCallback<UserRecordResult> CALLBACK = new FutureCallback<UserRecordResult>() {
 		@Override
 		public void onFailure(Throwable t) {
 			if (t instanceof UserRecordFailedException) {
@@ -78,7 +70,6 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		@Override
 		public void onSuccess(UserRecordResult result) {
-
 		}
 	};
 
@@ -94,7 +85,6 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	@Override
 	public void flush(Map<TopicPartition, OffsetAndMetadata> arg0) {
-		// TODO Auto-generated method stub
 		if (singleKinesisProducerPerPartition) {
 			producerMap.values().forEach(producer -> {
 				if (flushSync)
@@ -122,7 +112,6 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		String partitionKey;
 		for (SinkRecord sinkRecord : sinkRecords) {
-
 			ListenableFuture<UserRecordResult> f;
 			// Kinesis does not allow empty partition key
 			if (sinkRecord.key() != null && !sinkRecord.key().toString().trim().equals("")) {
@@ -137,8 +126,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 			else
 				f = addUserRecord(kinesisProducer, streamName, partitionKey, usePartitionAsHashKey, sinkRecord);
 
-			Futures.addCallback(f, callback);
-
+			Futures.addCallback(f, CALLBACK);
 		}
 	}
 
@@ -213,60 +201,43 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	private ListenableFuture<UserRecordResult> addUserRecord(KinesisProducer kp, String streamName, String partitionKey,
 			boolean usePartitionAsHashKey, SinkRecord sinkRecord) {
 
+		ByteBuffer data = ByteBuffer.wrap(converter.fromConnectData(sinkRecord.topic(), sinkRecord.valueSchema(), sinkRecord.value()));
+
 		// If configured use kafka partition key as explicit hash key
 		// This will be useful when sending data from same partition into
 		// same shard
 		if (usePartitionAsHashKey)
-			return kp.addUserRecord(streamName, partitionKey, Integer.toString(sinkRecord.kafkaPartition()),
-					DataUtility.parseValue(sinkRecord.valueSchema(), sinkRecord.value()));
+			return kp.addUserRecord(streamName, partitionKey, Integer.toString(sinkRecord.kafkaPartition()), data);
 		else
-			return kp.addUserRecord(streamName, partitionKey,
-					DataUtility.parseValue(sinkRecord.valueSchema(), sinkRecord.value()));
-
+			return kp.addUserRecord(streamName, partitionKey, data);
 	}
 
 	@Override
 	public void start(Map<String, String> props) {
-
-		streamName = props.get(AmazonKinesisSinkConnector.STREAM_NAME);
-
-		maxConnections = Integer.parseInt(props.get(AmazonKinesisSinkConnector.MAX_CONNECTIONS));
-
-		rateLimit = Integer.parseInt(props.get(AmazonKinesisSinkConnector.RATE_LIMIT));
-
-		maxBufferedTime = Integer.parseInt(props.get(AmazonKinesisSinkConnector.MAX_BUFFERED_TIME));
-
-		ttl = Integer.parseInt(props.get(AmazonKinesisSinkConnector.RECORD_TTL));
-
-		regionName = props.get(AmazonKinesisSinkConnector.REGION);
-
-		metricsLevel = props.get(AmazonKinesisSinkConnector.METRICS_LEVEL);
-
-		metricsGranuality = props.get(AmazonKinesisSinkConnector.METRICS_GRANUALITY);
-
-		metricsNameSpace = props.get(AmazonKinesisSinkConnector.METRICS_NAMESPACE);
-
-		aggregration = Boolean.parseBoolean(props.get(AmazonKinesisSinkConnector.AGGREGRATION_ENABLED));
-
-		usePartitionAsHashKey = Boolean.parseBoolean(props.get(AmazonKinesisSinkConnector.USE_PARTITION_AS_HASH_KEY));
-
-		flushSync = Boolean.parseBoolean(props.get(AmazonKinesisSinkConnector.FLUSH_SYNC));
-
-		singleKinesisProducerPerPartition = Boolean
-				.parseBoolean(props.get(AmazonKinesisSinkConnector.SINGLE_KINESIS_PRODUCER_PER_PARTITION));
-
-		pauseConsumption = Boolean.parseBoolean(props.get(AmazonKinesisSinkConnector.PAUSE_CONSUMPTION));
-
-		outstandingRecordsThreshold = Integer
-				.parseInt(props.get(AmazonKinesisSinkConnector.OUTSTANDING_RECORDS_THRESHOLD));
-
-		sleepPeriod = Integer.parseInt(props.get(AmazonKinesisSinkConnector.SLEEP_PERIOD));
-
-		sleepCycles = Integer.parseInt(props.get(AmazonKinesisSinkConnector.SLEEP_CYCLES));
+    AmazonKinesisSinkConfig config = new AmazonKinesisSinkConfig(props);
+		streamName = config.getString(AmazonKinesisSinkConfig.STREAM_NAME);
+		maxConnections = config.getInt(AmazonKinesisSinkConfig.MAX_CONNECTIONS);
+		rateLimit = config.getInt(AmazonKinesisSinkConfig.RATE_LIMIT);
+		maxBufferedTime = config.getInt(AmazonKinesisSinkConfig.MAX_BUFFERED_TIME);
+		ttl = config.getInt(AmazonKinesisSinkConfig.RECORD_TTL);
+		regionName = config.getString(AmazonKinesisSinkConfig.REGION);
+		metricsLevel = config.getString(AmazonKinesisSinkConfig.METRICS_LEVEL);
+		metricsGranuality = config.getString(AmazonKinesisSinkConfig.METRICS_GRANULARITY);
+		metricsNameSpace = config.getString(AmazonKinesisSinkConfig.METRICS_NAMESPACE);
+		aggregration = config.getBoolean(AmazonKinesisSinkConfig.AGGREGRATION_ENABLED);
+		usePartitionAsHashKey = config.getBoolean(AmazonKinesisSinkConfig.USE_PARTITION_AS_HASH_KEY);
+		flushSync = config.getBoolean(AmazonKinesisSinkConfig.FLUSH_SYNC);
+		singleKinesisProducerPerPartition = config.getBoolean(AmazonKinesisSinkConfig.SINGLE_KINESIS_PRODUCER_PER_PARTITION);
+		pauseConsumption = config.getBoolean(AmazonKinesisSinkConfig.PAUSE_CONSUMPTION);
+		outstandingRecordsThreshold = config.getInt(AmazonKinesisSinkConfig.OUTSTANDING_RECORDS_THRESHOLD);
+		sleepPeriod = config.getInt(AmazonKinesisSinkConfig.SLEEP_PERIOD);
+		sleepCycles = config.getInt(AmazonKinesisSinkConfig.SLEEP_CYCLES);
+		producerRole = config.getString(AmazonKinesisSinkConfig.PRODUCER_ROLE);
+		stsSessionName = config.getString(AmazonKinesisSinkConfig.STS_SESSION_NAME);
+		converter = config.converter();
 
 		if (!singleKinesisProducerPerPartition)
 			kinesisProducer = getKinesisProducer();
-
 	}
 
 	public void open(Collection<TopicPartition> partitions) {
@@ -303,7 +274,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	private KinesisProducer getKinesisProducer() {
 		KinesisProducerConfiguration config = new KinesisProducerConfiguration();
 		config.setRegion(regionName);
-		config.setCredentialsProvider(new DefaultAWSCredentialsProviderChain());
+		config.setCredentialsProvider(getCredentialsProvider());
 		config.setMaxConnections(maxConnections);
 
 		config.setAggregationEnabled(aggregration);
@@ -338,6 +309,13 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		return new KinesisProducer(config);
 
+	}
+
+	private AWSCredentialsProvider getCredentialsProvider() {
+		if (producerRole == null) {
+			return new DefaultAWSCredentialsProviderChain();
+		}
+		return new STSAssumeRoleSessionCredentialsProvider.Builder(producerRole, stsSessionName).build();
 	}
 
 }

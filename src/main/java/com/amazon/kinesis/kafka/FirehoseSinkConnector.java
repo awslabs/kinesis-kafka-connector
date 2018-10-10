@@ -23,7 +23,11 @@ public class FirehoseSinkConnector extends SinkConnector {
 	public static final String BATCH_SIZE = "batchSize";
 	
 	public static final String BATCH_SIZE_IN_BYTES = "batchSizeInBytes";
-	
+
+	public static final String PRODUCER_ROLE = "producerRole";
+
+	public static final String STS_SESSION_NAME = "stsSessionName";
+
 	private String deliveryStream;
 	
 	private String region;
@@ -36,12 +40,9 @@ public class FirehoseSinkConnector extends SinkConnector {
 
 	private String producerRole;
 
-    private String stsSessionName;
+	private String stsSessionName;
 
-    public static final String PRODUCER_ROLE = "producerRole";
 
-    public static final String STS_SESSION_NAME = "stsSessionName";
-	
 	private final String MAX_BATCH_SIZE = "500";
 	
 	private final String MAX_BATCH_SIZE_IN_BYTES = "3670016";
@@ -54,8 +55,8 @@ public class FirehoseSinkConnector extends SinkConnector {
 		batch = props.get(BATCH);	
 		batchSize = props.get(BATCH_SIZE);
 		batchSizeInBytes = props.get(BATCH_SIZE_IN_BYTES);
-        producerRole = props.get(PRODUCER_ROLE);
-        stsSessionName = props.getOrDefault(STS_SESSION_NAME, STS_SESSION_NAME_DEFAULT);
+		producerRole = props.get(PRODUCER_ROLE);
+		stsSessionName = props.getOrDefault(STS_SESSION_NAME, STS_SESSION_NAME_DEFAULT);
 	}
 
 	@Override
@@ -93,10 +94,10 @@ public class FirehoseSinkConnector extends SinkConnector {
 			else 
 				config.put(BATCH_SIZE_IN_BYTES, MAX_BATCH_SIZE_IN_BYTES);
 
-            if (producerRole != null)
-                config.put(PRODUCER_ROLE, producerRole);
-            if (stsSessionName != null)
-                config.put(STS_SESSION_NAME, stsSessionName);
+			if (producerRole != null)
+					config.put(PRODUCER_ROLE, producerRole);
+			if (stsSessionName != null)
+					config.put(STS_SESSION_NAME, stsSessionName);
 			configs.add(config);
 		}
 		return configs;

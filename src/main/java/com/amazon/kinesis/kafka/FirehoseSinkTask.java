@@ -60,16 +60,16 @@ public class FirehoseSinkTask extends SinkTask {
 	public void start(Map<String, String> props) {
 
 		batch = Boolean.parseBoolean(props.get(FirehoseSinkConnector.BATCH));
-		
+
 		batchSize = Integer.parseInt(props.get(FirehoseSinkConnector.BATCH_SIZE));
-		
+
 		batchSizeInBytes = Integer.parseInt(props.get(FirehoseSinkConnector.BATCH_SIZE_IN_BYTES));
-		
+
 		deliveryStreamName = props.get(FirehoseSinkConnector.DELIVERY_STREAM);
 
-		producerRole = props.get(AmazonKinesisSinkConnector.PRODUCER_ROLE);
+		producerRole = props.get(FirehoseSinkConnector.PRODUCER_ROLE);
 
-		stsSessionName = props.get(AmazonKinesisSinkConnector.STS_SESSION_NAME);
+		stsSessionName = props.get(FirehoseSinkConnector.STS_SESSION_NAME);
 
 		firehoseClient = new AmazonKinesisFirehoseClient(getCredentialsProvider());
 

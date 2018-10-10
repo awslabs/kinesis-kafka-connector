@@ -2,10 +2,17 @@ package com.amazon.kinesis.kafka;
 
 import java.util.Map;
 
+import org.apache.kafka.common.Configurable;
+import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
-import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.ConfigDef.Importance;
+import org.apache.kafka.common.config.ConfigDef.Type;
+import org.apache.kafka.common.utils.Utils;
+import org.apache.kafka.connect.storage.Converter;
+import org.apache.kafka.connect.storage.ConverterType;
+
+import com.google.common.collect.ImmutableMap;
 
 public class AmazonKinesisSinkConfig extends AbstractConfig {
     public static final String REGION = "region";
@@ -51,14 +58,42 @@ public class AmazonKinesisSinkConfig extends AbstractConfig {
         DEFINITION.define(SLEEP_CYCLES, Type.INT, 10, Importance.MEDIUM, "Sleep cycles");
         DEFINITION.define(PRODUCER_ROLE, Type.STRING, Importance.HIGH, "Producer role");
         DEFINITION.define(STS_SESSION_NAME, Type.STRING, "AmazonKinesisSink", Importance.MEDIUM, "Sts session name");
-        DEFINITION.define(SINK_RECORD_CONVERTER, Type.CLASS, Importance.MEDIUM, "SinkRecordConverter type");
+        DEFINITION.define(SINK_RECORD_CONVERTER, Type.CLASS, Importance.MEDIUM, "Sink record converter type");
     }
 
     public AmazonKinesisSinkConfig(final Map<String, String> props) {
         super(AmazonKinesisSinkConfig.DEFINITION, props);
     }
 
-    public SinkRecordConverter sinkRecordConverter() {
-        return getConfiguredInstance(SINK_RECORD_CONVERTER, SinkRecordConverter.class);
+    public <T> T getConfiguredInstance(String key, Class<T> t, Map<String, Object> configOverrides) {
+        Class<?> c = this.getClass(key);
+        if (c == null) {
+            return null;
+        }
+        else {
+            Object o = Utils.newInstance(c);
+            if (!t.isInstance(o)) {
+                throw new KafkaException(c.getName() + " is not an instance of " + t.getName());
+            }
+            else {
+                if (o instanceof Configurable) {
+                    Map<String, Object> configPairs = this.originals();
+                    configPairs.putAll(configOverrides);
+                    ((Configurable)o).configure(configPairs);
+                }
+
+                return t.cast(o);
+            }
+        }
+    }
+
+    public Converter converter() {
+        return getConfiguredInstance(SINK_RECORD_CONVERTER, Converter.class,
+            ImmutableMap.of(
+                // TODO Make these configurable if needed
+                "schemas.enable", false,
+                "converter.type", ConverterType.VALUE.getName()
+            )
+        );
     }
 }

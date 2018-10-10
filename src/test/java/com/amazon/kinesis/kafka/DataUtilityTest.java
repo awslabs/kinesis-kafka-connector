@@ -101,7 +101,33 @@ public class DataUtilityTest {
 		Assert.assertTrue(actual.equals(expected));
 
 	}
-	
+
+	@Test
+	public void parseOptionalNullStringValueTest(){
+
+		Schema schema = SchemaBuilder.string().optional();
+		ByteBuffer actual = DataUtility.parseValue(schema, null);
+		ByteBuffer expected = ByteBuffer.allocate(0);
+
+		Assert.assertTrue(actual.equals(expected));
+	}
+
+	@Test
+	public void parseOptionalNonNullStringValueTest(){
+
+		Schema schema = SchemaBuilder.string().optional();
+		ByteBuffer actual = DataUtility.parseValue(schema, "Testing Kinesis-Kafka Connector");
+		ByteBuffer expected = null;
+		try {
+			expected = ByteBuffer.wrap(("Testing Kinesis-Kafka Connector").getBytes("UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		Assert.assertTrue(actual.equals(expected));
+	}
+
 	@Test
 	public void parseArrayValueTest(){
 		

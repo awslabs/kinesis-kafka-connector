@@ -12,6 +12,7 @@ import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.apache.kafka.connect.sink.SinkTaskContext;
+import org.apache.kafka.connect.storage.Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +54,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	private SinkTaskContext sinkTaskContext;
 	private Map<String, KinesisProducer> producerMap = new HashMap<String, KinesisProducer>();
 	private KinesisProducer kinesisProducer;
-	private SinkRecordConverter recordConverter;
+	private Converter converter;
 
 	private static final FutureCallback<UserRecordResult> CALLBACK = new FutureCallback<UserRecordResult>() {
 		@Override
@@ -200,9 +201,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	private ListenableFuture<UserRecordResult> addUserRecord(KinesisProducer kp, String streamName, String partitionKey,
 			boolean usePartitionAsHashKey, SinkRecord sinkRecord) {
 
-//		ByteBuffer data = recordConverter.convert(sinkRecord);
-		// TODO DELETE
-		LOG.info("Sending record {}", StandardCharsets.UTF_8.decode(data).toString());
+		ByteBuffer data = ByteBuffer.wrap(converter.fromConnectData(sinkRecord.topic(), sinkRecord.valueSchema(), sinkRecord.value()));
 
 		// If configured use kafka partition key as explicit hash key
 		// This will be useful when sending data from same partition into
@@ -235,7 +234,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 		sleepCycles = config.getInt(AmazonKinesisSinkConfig.SLEEP_CYCLES);
 		producerRole = config.getString(AmazonKinesisSinkConfig.PRODUCER_ROLE);
 		stsSessionName = config.getString(AmazonKinesisSinkConfig.STS_SESSION_NAME);
-		recordConverter = config.sinkRecordConverter();
+		converter = config.converter();
 
 		if (!singleKinesisProducerPerPartition)
 			kinesisProducer = getKinesisProducer();

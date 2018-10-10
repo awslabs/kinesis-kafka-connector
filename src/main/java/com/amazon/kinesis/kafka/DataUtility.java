@@ -1,6 +1,8 @@
 package com.amazon.kinesis.kafka;
 
 import com.amazonaws.services.kinesisfirehose.model.Record;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Schema.Type;
 import org.apache.kafka.connect.data.Struct;
@@ -33,6 +35,20 @@ public class DataUtility {
 	public static ByteBuffer parseValue(Schema schema, Object value) {
 		Schema.Type t = schema.type();
 		LOG.info("Parsing value {} value with schema {}", value, schema);
+		if (value == null) {
+			if (schema == null) {
+				return null;
+			}
+			else if (schema.defaultValue() != null) {
+				return parseValue(schema, schema.defaultValue());
+			}
+			else if (schema.isOptional()) {
+				return ByteBuffer.allocate(0);
+			}
+			else {
+				throw new DataException("Conversion error: null value for field that is required and has no default value");
+			}
+		}
 		switch(t) {
 			case INT8:
 				ByteBuffer byteBuffer = ByteBuffer.allocate(1);

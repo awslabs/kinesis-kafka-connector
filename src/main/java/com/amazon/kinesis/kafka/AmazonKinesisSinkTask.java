@@ -11,7 +11,9 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.apache.kafka.connect.sink.SinkTaskContext;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider;
 import com.amazonaws.services.kinesis.producer.Attempt;
 import com.amazonaws.services.kinesis.producer.KinesisProducer;
 import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration;
@@ -23,7 +25,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class AmazonKinesisSinkTask extends SinkTask {
-
 	private String streamName;
 
 	private String regionName;
@@ -57,6 +58,10 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	private int sleepPeriod;
 
 	private int sleepCycles;
+
+	private String producerRole;
+
+	private String stsSessionName;
 
 	private SinkTaskContext sinkTaskContext;
 
@@ -264,6 +269,10 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		sleepCycles = Integer.parseInt(props.get(AmazonKinesisSinkConnector.SLEEP_CYCLES));
 
+		producerRole = props.get(AmazonKinesisSinkConnector.PRODUCER_ROLE);
+
+		stsSessionName = props.get(AmazonKinesisSinkConnector.STS_SESSION_NAME);
+
 		if (!singleKinesisProducerPerPartition)
 			kinesisProducer = getKinesisProducer();
 
@@ -300,10 +309,19 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	}
 
+
+	private AWSCredentialsProvider getCredentialsProvider() {
+		if (producerRole == null) {
+			return new DefaultAWSCredentialsProviderChain();
+		}
+
+		return new STSAssumeRoleSessionCredentialsProvider.Builder(producerRole, stsSessionName).build();
+	}
+
 	private KinesisProducer getKinesisProducer() {
 		KinesisProducerConfiguration config = new KinesisProducerConfiguration();
 		config.setRegion(regionName);
-		config.setCredentialsProvider(new DefaultAWSCredentialsProviderChain());
+		config.setCredentialsProvider(getCredentialsProvider());
 		config.setMaxConnections(maxConnections);
 
 		config.setAggregationEnabled(aggregration);

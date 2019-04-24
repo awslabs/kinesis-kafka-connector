@@ -14,6 +14,8 @@ public class FirehoseSinkConnector extends SinkConnector {
 
 	public static final String DELIVERY_STREAM = "deliveryStream";
 	
+	public static final String ENDPOINT = "endpoint";
+
 	public static final String REGION = "region";
 	
 	public static final String BATCH = "batch";
@@ -24,6 +26,8 @@ public class FirehoseSinkConnector extends SinkConnector {
 	
 	private String deliveryStream;
 	
+	private String endpoint;
+
 	private String region;
 	
 	private String batch;
@@ -40,6 +44,7 @@ public class FirehoseSinkConnector extends SinkConnector {
 	public void start(Map<String, String> props) {
 		
 		deliveryStream = props.get(DELIVERY_STREAM);
+		endpoint = props.get(ENDPOINT);
 		region = props.get(REGION);
 		batch = props.get(BATCH);	
 		batchSize = props.get(BATCH_SIZE);
@@ -65,6 +70,9 @@ public class FirehoseSinkConnector extends SinkConnector {
 			if (deliveryStream != null)
 				config.put(DELIVERY_STREAM, deliveryStream);
 			
+			if(endpoint != null)
+				config.put(ENDPOINT, endpoint);
+
 			if(region != null)
 				config.put(REGION, region);
 			

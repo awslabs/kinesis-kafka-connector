@@ -11,9 +11,9 @@ import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.regions.RegionUtils;
-import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehoseClient;
+import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
+import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehoseClientBuilder;
 import com.amazonaws.services.kinesisfirehose.model.AmazonKinesisFirehoseException;
 import com.amazonaws.services.kinesisfirehose.model.DescribeDeliveryStreamRequest;
 import com.amazonaws.services.kinesisfirehose.model.DescribeDeliveryStreamResult;
@@ -31,7 +31,7 @@ public class FirehoseSinkTask extends SinkTask {
 
 	private String deliveryStreamName;
 
-	private AmazonKinesisFirehoseClient firehoseClient;
+	private AmazonKinesisFirehose firehoseClient;
 
 	private boolean batch;
 	
@@ -69,9 +69,14 @@ public class FirehoseSinkTask extends SinkTask {
 		
 		deliveryStreamName = props.get(FirehoseSinkConnector.DELIVERY_STREAM);
 
-		firehoseClient = new AmazonKinesisFirehoseClient(new DefaultAWSCredentialsProviderChain());
+		String endpoint = props.get(FirehoseSinkConnector.ENDPOINT);
 
-		firehoseClient.setRegion(RegionUtils.getRegion(props.get(FirehoseSinkConnector.REGION)));
+		String region = props.get(FirehoseSinkConnector.REGION);
+
+		firehoseClient = AmazonKinesisFirehoseClientBuilder
+				.standard()
+				.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region))
+				.build();
 
 		// Validate delivery stream
 		validateDeliveryStream();

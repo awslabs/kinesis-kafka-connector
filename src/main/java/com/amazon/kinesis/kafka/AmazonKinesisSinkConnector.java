@@ -14,6 +14,10 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 
 	public static final String REGION = "region";
 
+	public static final String AWS_KEY = "awsKey";
+
+	public static final String AWS_SECRET = "awsSecret";
+
 	public static final String STREAM_NAME = "streamName";
 
 	public static final String MAX_BUFFERED_TIME = "maxBufferedTime";
@@ -80,6 +84,10 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 	
 	private String sleepCycles;
 
+	private String awsKey;
+
+	private String awsSecret;
+
 	@Override
 	public void start(Map<String, String> props) {
 		region = props.get(REGION);
@@ -99,6 +107,8 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 		outstandingRecordsThreshold = props.get(OUTSTANDING_RECORDS_THRESHOLD);
 		sleepPeriod = props.get(SLEEP_PERIOD);
 		sleepCycles = props.get(SLEEP_CYCLES);
+		awsKey = props.get(AWS_KEY);
+		awsSecret = props.get(AWS_SECRET);
 	}
 
 	@Override
@@ -198,6 +208,9 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 				config.put(SLEEP_CYCLES, sleepCycles);
 			else
 				config.put(SLEEP_CYCLES, "10");
+
+			config.put(AWS_KEY, awsKey);
+			config.put(AWS_SECRET, awsSecret);
 			
 			configs.add(config);
 

@@ -4,6 +4,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.errors.DataException;
@@ -27,6 +30,10 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	private String streamName;
 
 	private String regionName;
+
+	private String awsKey;
+
+	private String awsSecret;
 
 	private int maxConnections;
 
@@ -264,6 +271,10 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		sleepCycles = Integer.parseInt(props.get(AmazonKinesisSinkConnector.SLEEP_CYCLES));
 
+		awsKey = props.get(AmazonKinesisSinkConnector.AWS_KEY);
+
+		awsSecret = props.get(AmazonKinesisSinkConnector.AWS_SECRET);
+
 		if (!singleKinesisProducerPerPartition)
 			kinesisProducer = getKinesisProducer();
 
@@ -303,7 +314,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	private KinesisProducer getKinesisProducer() {
 		KinesisProducerConfiguration config = new KinesisProducerConfiguration();
 		config.setRegion(regionName);
-		config.setCredentialsProvider(new DefaultAWSCredentialsProviderChain());
+		config.setCredentialsProvider(getCredentialProvider(awsKey, awsSecret));
 		config.setMaxConnections(maxConnections);
 
 		config.setAggregationEnabled(aggregration);
@@ -340,4 +351,9 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	}
 
+	private AWSCredentialsProvider getCredentialProvider(String key, String secret) {
+		if(key != null && secret != null)
+			return new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret));
+		else return new DefaultAWSCredentialsProviderChain();
+	}
 }

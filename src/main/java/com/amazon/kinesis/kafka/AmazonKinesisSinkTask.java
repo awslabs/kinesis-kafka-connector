@@ -35,6 +35,16 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	private String awsSecret;
 
+	private String awsKinesisHost;
+
+	private Integer awsKinesisPort;
+
+	private String awsCloudWatchHost;
+
+	private Integer awsCloudWatchPort;
+
+	private Boolean awsValidateCertificate;
+
 	private int maxConnections;
 
 	private int rateLimit;
@@ -275,6 +285,19 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		awsSecret = props.get(AmazonKinesisSinkConnector.AWS_SECRET);
 
+		awsKinesisHost = props.get(AmazonKinesisSinkConnector.AWS_KINESIS_HOST);
+
+		if (props.get(AmazonKinesisSinkConnector.AWS_KINESIS_PORT) != null)
+			awsKinesisPort = Integer.valueOf(props.get(AmazonKinesisSinkConnector.AWS_KINESIS_PORT));
+
+		awsCloudWatchHost = props.get(AmazonKinesisSinkConnector.AWS_CLOUDWATCH_HOST);
+
+		if (props.get(AmazonKinesisSinkConnector.AWS_CLOUDWATCH_PORT) != null)
+			awsCloudWatchPort = Integer.valueOf(props.get(AmazonKinesisSinkConnector.AWS_CLOUDWATCH_PORT));
+
+		if (props.get(AmazonKinesisSinkConnector.AWS_VALIDATE_CERTIFICATE) != null)
+			awsValidateCertificate = Boolean.valueOf(props.get(AmazonKinesisSinkConnector.AWS_VALIDATE_CERTIFICATE));
+
 		if (!singleKinesisProducerPerPartition)
 			kinesisProducer = getKinesisProducer();
 
@@ -310,9 +333,14 @@ public class AmazonKinesisSinkTask extends SinkTask {
 		}
 
 	}
-
 	private KinesisProducer getKinesisProducer() {
 		KinesisProducerConfiguration config = new KinesisProducerConfiguration();
+
+		setKinesisEnpointAndPortIfNotEmpty(config);
+		setCloudwatchEnpointAndPortIfNotEmpty(config);
+
+		setVerifyCertificateIfNotEmpty(config);
+
 		config.setRegion(regionName);
 		config.setCredentialsProvider(getCredentialProvider(awsKey, awsSecret));
 		config.setMaxConnections(maxConnections);
@@ -355,5 +383,26 @@ public class AmazonKinesisSinkTask extends SinkTask {
 		if(key != null && secret != null)
 			return new AWSStaticCredentialsProvider(new BasicAWSCredentials(key, secret));
 		else return new DefaultAWSCredentialsProviderChain();
+	}
+
+	private void setKinesisEnpointAndPortIfNotEmpty(KinesisProducerConfiguration config) {
+		if(awsKinesisHost != null && awsKinesisPort != null) {
+			config.setKinesisEndpoint(awsKinesisHost);
+			config.setKinesisPort(awsKinesisPort);
+			config.setVerifyCertificate(false);
+		}
+	}
+
+	private void setCloudwatchEnpointAndPortIfNotEmpty(KinesisProducerConfiguration config) {
+		if(awsCloudWatchHost != null && awsCloudWatchPort != null) {
+			config.setCloudwatchEndpoint(awsCloudWatchHost);
+			config.setCloudwatchPort(awsCloudWatchPort);
+		}
+	}
+
+	private void setVerifyCertificateIfNotEmpty(KinesisProducerConfiguration config) {
+		if (awsValidateCertificate != null){
+			config.setVerifyCertificate(awsValidateCertificate);
+		}
 	}
 }

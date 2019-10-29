@@ -1,3 +1,5 @@
+Not sure, but this connector might not work with Avro
+
 ### Introduction
 
 The Kafka-Kinesis-Connector is a connector to be used with [Kafka Connect](https://kafka.apache.org/documentation/#connect) to publish messages from Kafka to [Amazon Kinesis Streams](https://aws.amazon.com/kinesis/streams/) or [Amazon Kinesis Firehose](https://aws.amazon.com/kinesis/firehose/).

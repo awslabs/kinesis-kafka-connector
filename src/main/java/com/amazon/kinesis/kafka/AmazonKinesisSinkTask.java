@@ -285,12 +285,14 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		awsSecret = props.get(AmazonKinesisSinkConnector.AWS_SECRET);
 
-		awsKinesisHost = props.get(AmazonKinesisSinkConnector.AWS_KINESIS_HOST);
+		if (props.get(AmazonKinesisSinkConnector.AWS_KINESIS_HOST) != null)
+			awsKinesisHost = props.get(AmazonKinesisSinkConnector.AWS_KINESIS_HOST);
 
 		if (props.get(AmazonKinesisSinkConnector.AWS_KINESIS_PORT) != null)
 			awsKinesisPort = Integer.valueOf(props.get(AmazonKinesisSinkConnector.AWS_KINESIS_PORT));
 
-		awsCloudWatchHost = props.get(AmazonKinesisSinkConnector.AWS_CLOUDWATCH_HOST);
+		if (props.get(AmazonKinesisSinkConnector.AWS_CLOUDWATCH_HOST) != null)
+			awsCloudWatchHost = props.get(AmazonKinesisSinkConnector.AWS_CLOUDWATCH_HOST);
 
 		if (props.get(AmazonKinesisSinkConnector.AWS_CLOUDWATCH_PORT) != null)
 			awsCloudWatchPort = Integer.valueOf(props.get(AmazonKinesisSinkConnector.AWS_CLOUDWATCH_PORT));

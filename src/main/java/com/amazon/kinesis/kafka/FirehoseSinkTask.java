@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.ClientConfigurationFactory;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigException;
@@ -34,9 +36,9 @@ public class FirehoseSinkTask extends SinkTask {
 	private AmazonKinesisFirehoseClient firehoseClient;
 
 	private boolean batch;
-	
+
 	private int batchSize;
-	
+
 	private int batchSizeInBytes;
 
 	@Override
@@ -62,16 +64,19 @@ public class FirehoseSinkTask extends SinkTask {
 	public void start(Map<String, String> props) {
 
 		batch = Boolean.parseBoolean(props.get(FirehoseSinkConnector.BATCH));
-		
+
 		batchSize = Integer.parseInt(props.get(FirehoseSinkConnector.BATCH_SIZE));
-		
+
 		batchSizeInBytes = Integer.parseInt(props.get(FirehoseSinkConnector.BATCH_SIZE_IN_BYTES));
-		
+
 		deliveryStreamName = props.get(FirehoseSinkConnector.DELIVERY_STREAM);
 
 		firehoseClient = new AmazonKinesisFirehoseClient(new DefaultAWSCredentialsProviderChain());
 
 		firehoseClient.setRegion(RegionUtils.getRegion(props.get(FirehoseSinkConnector.REGION)));
+
+		if (props.get(FirehoseSinkConnector.REGION).startsWith("cn-"))
+			firehoseClient.setEndpoint("firehose." + props.get(FirehoseSinkConnector.REGION) + ".amazonaws.com.cn");
 
 		// Validate delivery stream
 		validateDeliveryStream();
@@ -114,15 +119,15 @@ public class FirehoseSinkTask extends SinkTask {
 
 		// Put Record Batch records. Max No.Of Records we can put in a
 		// single put record batch request is 500 and total size < 4MB
-		PutRecordBatchResult putRecordBatchResult = null; 
+		PutRecordBatchResult putRecordBatchResult = null;
 		try {
-			 putRecordBatchResult = firehoseClient.putRecordBatch(putRecordBatchRequest);
+			putRecordBatchResult = firehoseClient.putRecordBatch(putRecordBatchRequest);
 		}catch(AmazonKinesisFirehoseException akfe){
-			 System.out.println("Amazon Kinesis Firehose Exception:" + akfe.getLocalizedMessage());
+			System.out.println("Amazon Kinesis Firehose Exception:" + akfe.getLocalizedMessage());
 		}catch(Exception e){
-			 System.out.println("Connector Exception" + e.getLocalizedMessage());
+			System.out.println("Connector Exception" + e.getLocalizedMessage());
 		}
-		return putRecordBatchResult; 
+		return putRecordBatchResult;
 	}
 
 	/**
@@ -138,7 +143,7 @@ public class FirehoseSinkTask extends SinkTask {
 			recordList.add(record);
 			recordsInBatch++;
 			recordsSizeInBytes += record.getData().capacity();
-						
+
 			if (recordsInBatch == batchSize || recordsSizeInBytes > batchSizeInBytes) {
 				putRecordBatch(recordList);
 				recordList.clear();
@@ -162,14 +167,14 @@ public class FirehoseSinkTask extends SinkTask {
 			PutRecordRequest putRecordRequest = new PutRecordRequest();
 			putRecordRequest.setDeliveryStreamName(deliveryStreamName);
 			putRecordRequest.setRecord(DataUtility.createRecord(sinkRecord));
-			
+
 			PutRecordResult putRecordResult;
 			try {
 				firehoseClient.putRecord(putRecordRequest);
 			}catch(AmazonKinesisFirehoseException akfe){
-				 System.out.println("Amazon Kinesis Firehose Exception:" + akfe.getLocalizedMessage());
+				System.out.println("Amazon Kinesis Firehose Exception:" + akfe.getLocalizedMessage());
 			}catch(Exception e){
-				 System.out.println("Connector Exception" + e.getLocalizedMessage());
+				System.out.println("Connector Exception" + e.getLocalizedMessage());
 			}
 		}
 	}

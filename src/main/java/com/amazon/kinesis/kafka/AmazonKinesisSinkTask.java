@@ -58,6 +58,8 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	private int sleepCycles;
 
+	private boolean appendLineBreak;
+
 	private SinkTaskContext sinkTaskContext;
 
 	private Map<String, KinesisProducer> producerMap = new HashMap<String, KinesisProducer>();
@@ -211,17 +213,20 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	}
 
 	private ListenableFuture<UserRecordResult> addUserRecord(KinesisProducer kp, String streamName, String partitionKey,
-			boolean usePartitionAsHashKey, SinkRecord sinkRecord) {
+															 boolean usePartitionAsHashKey, SinkRecord sinkRecord) {
+
+		// the appendLineBreak ONLY works with String record
+		Object value = appendLineBreak ? sinkRecord.value().toString() + "\n" : sinkRecord.value();
 
 		// If configured use kafka partition key as explicit hash key
 		// This will be useful when sending data from same partition into
 		// same shard
 		if (usePartitionAsHashKey)
 			return kp.addUserRecord(streamName, partitionKey, Integer.toString(sinkRecord.kafkaPartition()),
-					DataUtility.parseValue(sinkRecord.valueSchema(), sinkRecord.value()));
+					DataUtility.parseValue(sinkRecord.valueSchema(), value));
 		else
 			return kp.addUserRecord(streamName, partitionKey,
-					DataUtility.parseValue(sinkRecord.valueSchema(), sinkRecord.value()));
+					DataUtility.parseValue(sinkRecord.valueSchema(), value));
 
 	}
 
@@ -264,6 +269,8 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		sleepCycles = Integer.parseInt(props.get(AmazonKinesisSinkConnector.SLEEP_CYCLES));
 
+		appendLineBreak = Boolean.parseBoolean(props.get(AmazonKinesisSinkConnector.APPEND_LINE_BREAK));
+
 		if (!singleKinesisProducerPerPartition)
 			kinesisProducer = getKinesisProducer();
 
@@ -303,6 +310,10 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	private KinesisProducer getKinesisProducer() {
 		KinesisProducerConfiguration config = new KinesisProducerConfiguration();
 		config.setRegion(regionName);
+		if (regionName.startsWith("cn-")) {
+			config.setCloudwatchEndpoint("monitoring." + regionName + ".amazonaws.com.cn");
+			config.setKinesisEndpoint("kinesis." + regionName + ".amazonaws.com.cn");
+		}
 		config.setCredentialsProvider(new DefaultAWSCredentialsProviderChain());
 		config.setMaxConnections(maxConnections);
 

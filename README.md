@@ -81,4 +81,5 @@ You can build the project by running "maven package" and it will build amazon-ki
 | metricsLevel | Controls the number of metrics that are uploaded to CloudWatch. Expected pattern: none/summary/detailed | none |
 | metricsGranuality | Controls the granularity of metrics that are uploaded to CloudWatch. Greater granularity produces more metrics. Expected pattern: global/stream/shard. |  global |
 | metricsNameSpace | The namespace to upload metrics under. | KinesisProducer |
-| aggregration | With aggregation, multiple user records are packed into a single KinesisRecord. If disabled, each user record is sent in its own KinesisRecord.| true
+| aggregration | With aggregation, multiple user records are packed into a single KinesisRecord. If disabled, each user record is sent in its own KinesisRecord.| true |
+| appendLineBreak | If Enabled, a line break will be append to each record in Kafka message before inject into Kinesis. It is useful if records are saved to S3 using Kinesis Firehose, and use Apache HIVE for further processing | false |

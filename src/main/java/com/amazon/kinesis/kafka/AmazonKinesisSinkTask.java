@@ -1,5 +1,6 @@
 package com.amazon.kinesis.kafka;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -154,7 +155,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 			else
 				f = addUserRecord(kinesisProducer, streamName, partitionKey, usePartitionAsHashKey, sinkRecord);
 
-			Futures.addCallback(f, callback);
+			Futures.addCallback(f, callback, MoreExecutors.directExecutor());
 
 		}
 	}

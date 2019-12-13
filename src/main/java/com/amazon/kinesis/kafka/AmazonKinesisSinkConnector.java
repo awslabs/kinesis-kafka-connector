@@ -224,11 +224,20 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 			else
 				config.put(SLEEP_CYCLES, "10");
 
-			config.put(AWS_KINESIS_HOST, awsKinesisHost);
-			config.put(AWS_KINESIS_PORT, awsKinesisPort);
-			config.put(AWS_CLOUDWATCH_HOST, awsCloudWatchHost);
-			config.put(AWS_CLOUDWATCH_PORT, awsCloudWatchPort);
-			config.put(AWS_VALIDATE_CERTIFICATE, awsValidateCertificate);
+			if (awsKinesisHost != null)
+				config.put(AWS_KINESIS_HOST, awsKinesisHost);
+
+			if (awsKinesisPort != null)
+				config.put(AWS_KINESIS_PORT, awsKinesisPort);
+
+			if (awsCloudWatchHost != null)
+				config.put(AWS_CLOUDWATCH_HOST, awsCloudWatchHost);
+
+			if (awsCloudWatchPort != null)
+				config.put(AWS_CLOUDWATCH_PORT, awsCloudWatchPort);
+
+			if (awsValidateCertificate != null)
+				config.put(AWS_VALIDATE_CERTIFICATE, awsValidateCertificate);
 
 			config.put(AWS_KEY, awsKey);
 			config.put(AWS_SECRET, awsSecret);

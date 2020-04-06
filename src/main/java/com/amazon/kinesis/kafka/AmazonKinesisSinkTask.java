@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.amazonaws.util.StringUtils;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.errors.DataException;
@@ -11,7 +13,6 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.apache.kafka.connect.sink.SinkTaskContext;
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.kinesis.producer.Attempt;
 import com.amazonaws.services.kinesis.producer.KinesisProducer;
 import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration;
@@ -27,6 +28,16 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	private String streamName;
 
 	private String regionName;
+
+	private String roleARN;
+
+	private String roleExternalID;
+
+	private String roleSessionName;
+
+	private int roleDurationSeconds;
+
+	private String kinesisEndpoint;
 
 	private int maxConnections;
 
@@ -137,7 +148,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 			else
 				f = addUserRecord(kinesisProducer, streamName, partitionKey, usePartitionAsHashKey, sinkRecord);
 
-			Futures.addCallback(f, callback);
+			Futures.addCallback(f, callback, MoreExecutors.directExecutor());
 
 		}
 	}
@@ -240,6 +251,16 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		regionName = props.get(AmazonKinesisSinkConnector.REGION);
 
+		roleARN = props.get(AmazonKinesisSinkConnector.ROLE_ARN);
+
+		roleSessionName = props.get(AmazonKinesisSinkConnector.ROLE_SESSION_NAME);
+
+		roleDurationSeconds =  Integer.parseInt(props.get(AmazonKinesisSinkConnector.ROLE_DURATION_SECONDS));
+
+		roleExternalID = props.get(AmazonKinesisSinkConnector.ROLE_EXTERNAL_ID);
+
+		kinesisEndpoint = props.get(AmazonKinesisSinkConnector.KINESIS_ENDPOINT);
+
 		metricsLevel = props.get(AmazonKinesisSinkConnector.METRICS_LEVEL);
 
 		metricsGranuality = props.get(AmazonKinesisSinkConnector.METRICS_GRANUALITY);
@@ -303,8 +324,10 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	private KinesisProducer getKinesisProducer() {
 		KinesisProducerConfiguration config = new KinesisProducerConfiguration();
 		config.setRegion(regionName);
-		config.setCredentialsProvider(new DefaultAWSCredentialsProviderChain());
+		config.setCredentialsProvider(IAMUtility.createCredentials(regionName, roleARN, roleExternalID, roleSessionName, roleDurationSeconds));
 		config.setMaxConnections(maxConnections);
+		if (!StringUtils.isNullOrEmpty(kinesisEndpoint))
+			config.setKinesisEndpoint(kinesisEndpoint);
 
 		config.setAggregationEnabled(aggregration);
 
@@ -339,5 +362,4 @@ public class AmazonKinesisSinkTask extends SinkTask {
 		return new KinesisProducer(config);
 
 	}
-
 }

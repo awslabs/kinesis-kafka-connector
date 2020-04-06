@@ -46,9 +46,29 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 	
 	public static final String SLEEP_CYCLES = "sleepCycles";
 
+	public static final String ROLE_ARN = "roleARN";
+
+	public static final String ROLE_SESSION_NAME = "roleSessionName";
+
+	public static final String ROLE_EXTERNAL_ID = "roleExternalID";
+
+	public static final String ROLE_DURATION_SECONDS = "roleDurationSeconds";
+
+	public static final String KINESIS_ENDPOINT = "kinesisEndpoint";
+
 	private String region;
 
 	private String streamName;
+
+	private String roleARN;
+
+	private String roleSessionName;
+
+	private String roleExternalID;
+
+	private String roleDurationSeconds;
+
+	private String kinesisEndpoint;
 
 	private String maxBufferedTime;
 
@@ -84,6 +104,11 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 	public void start(Map<String, String> props) {
 		region = props.get(REGION);
 		streamName = props.get(STREAM_NAME);
+		roleARN = props.get(ROLE_ARN);
+		roleSessionName = props.get(ROLE_SESSION_NAME);
+		roleExternalID = props.get(ROLE_EXTERNAL_ID);
+		roleDurationSeconds = props.get(ROLE_DURATION_SECONDS);
+		kinesisEndpoint = props.get(KINESIS_ENDPOINT);
 		maxBufferedTime = props.get(MAX_BUFFERED_TIME);
 		maxConnections = props.get(MAX_CONNECTIONS);
 		rateLimit = props.get(RATE_LIMIT);
@@ -122,6 +147,23 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 
 			if (region != null)
 				config.put(REGION, region);
+
+			if (roleARN != null)
+				config.put(ROLE_ARN, roleARN);
+
+			if (roleSessionName != null)
+				config.put(ROLE_SESSION_NAME, roleSessionName);
+
+			if (roleExternalID != null)
+				config.put(ROLE_EXTERNAL_ID, roleExternalID);
+
+			if (roleDurationSeconds != null)
+				config.put(ROLE_DURATION_SECONDS, roleDurationSeconds);
+			else
+				config.put(ROLE_DURATION_SECONDS, "3600");
+
+			if (kinesisEndpoint != null)
+				config.put(KINESIS_ENDPOINT, kinesisEndpoint);
 
 			if (maxBufferedTime != null)
 				config.put(MAX_BUFFERED_TIME, maxBufferedTime);

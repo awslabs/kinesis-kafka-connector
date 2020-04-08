@@ -46,6 +46,22 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 	
 	public static final String SLEEP_CYCLES = "sleepCycles";
 
+	public static final String SCHEMA_ENABLE = "schemaEnable";
+	
+	public static final String AWS_KEY = "awsKey";
+	
+	public static final String AWS_SECRET = "awsSecret";
+	
+	public static final String AWS_KINESIS_HOST = "awsKinesisHost";
+	
+	public static final String AWS_KINESIS_PORT = "awsKinesisPort";
+	
+	public static final String AWS_CLOUDWATCH_HOST = "awsCloudWatchHost";
+	
+	public static final String AWS_CLOUDWATCH_PORT = "awsCloudWatchPort";
+	
+	public static final String AWS_VALIDATE_CERTIFICATE = "awsValidateCertificate";
+
 	private String region;
 
 	private String streamName;
@@ -80,6 +96,16 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 	
 	private String sleepCycles;
 
+	private String schemaEnable;
+	private String awsKey;
+	private String awsSecret;
+
+	private String awsKinesisHost;
+	private String awsKinesisPort;
+	private String awsCloudWatchHost;
+	private String awsCloudWatchPort;
+	private String awsValidateCertificate;
+
 	@Override
 	public void start(Map<String, String> props) {
 		region = props.get(REGION);
@@ -99,6 +125,14 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 		outstandingRecordsThreshold = props.get(OUTSTANDING_RECORDS_THRESHOLD);
 		sleepPeriod = props.get(SLEEP_PERIOD);
 		sleepCycles = props.get(SLEEP_CYCLES);
+		schemaEnable = props.get(SCHEMA_ENABLE);
+		awsKey = props.get(AWS_KEY);
+		awsSecret = props.get(AWS_SECRET);
+		awsKinesisHost = props.get(AWS_KINESIS_HOST);
+		awsKinesisPort = props.get(AWS_KINESIS_PORT);
+		awsCloudWatchHost = props.get(AWS_CLOUDWATCH_HOST);
+		awsCloudWatchPort = props.get(AWS_CLOUDWATCH_PORT);
+		awsValidateCertificate = props.get(AWS_VALIDATE_CERTIFICATE);
 	}
 
 	@Override
@@ -198,6 +232,29 @@ public class AmazonKinesisSinkConnector extends SinkConnector {
 				config.put(SLEEP_CYCLES, sleepCycles);
 			else
 				config.put(SLEEP_CYCLES, "10");
+
+			if(schemaEnable != null)
+				config.put(SCHEMA_ENABLE, schemaEnable);
+			else
+				config.put(SCHEMA_ENABLE, "true");
+
+			if (awsKinesisHost != null)
+				config.put(AWS_KINESIS_HOST, awsKinesisHost);
+
+			if (awsKinesisPort != null)
+				config.put(AWS_KINESIS_PORT, awsKinesisPort);
+
+			if (awsCloudWatchHost != null)
+				config.put(AWS_CLOUDWATCH_HOST, awsCloudWatchHost);
+
+			if (awsCloudWatchPort != null)
+				config.put(AWS_CLOUDWATCH_PORT, awsCloudWatchPort);
+
+			if (awsValidateCertificate != null)
+				config.put(AWS_VALIDATE_CERTIFICATE, awsValidateCertificate);
+
+			config.put(AWS_KEY, awsKey);
+			config.put(AWS_SECRET, awsSecret);
 			
 			configs.add(config);
 

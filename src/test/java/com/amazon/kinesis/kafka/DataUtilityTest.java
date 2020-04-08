@@ -7,6 +7,8 @@ import org.apache.kafka.connect.data.SchemaBuilder;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 
+import java.util.HashMap;
+
 public class DataUtilityTest {
 	
 	@Test
@@ -94,6 +96,41 @@ public class DataUtilityTest {
 			expected = ByteBuffer.wrap(((String) "Testing Kinesis-Kafka Connector").getBytes("UTF-8"));
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		Assert.assertTrue(actual.equals(expected));
+
+	}
+
+	@Test
+	public void parseStringValueTestNoSchema(){
+		
+		ByteBuffer actual = DataUtility.parseValue("Testing Kinesis-Kafka Connector");
+		ByteBuffer expected = null;
+		try {
+			expected = ByteBuffer.wrap(((String) "Testing Kinesis-Kafka Connector").getBytes("UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		Assert.assertTrue(actual.equals(expected));
+
+	}
+
+	@Test
+	public void parseHashMapValueTestNoSchema(){
+
+		HashMap<String, Integer> hmap = new HashMap<String, Integer>();
+
+		hmap.put("id", 1);
+		
+		ByteBuffer actual = DataUtility.parseValue(hmap);
+		ByteBuffer expected = null;
+		try {
+			expected = ByteBuffer.wrap(((String) "{\"id\":1}").getBytes("UTF-8"));
+		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
 		

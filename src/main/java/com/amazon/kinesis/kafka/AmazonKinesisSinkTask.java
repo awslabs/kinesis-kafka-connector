@@ -174,7 +174,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 					while (producer.getOutstandingRecordsCount() > outstandingRecordsThreshold) {
 						try {
 							// Pausing further
-							sinkTaskContext.pause((TopicPartition[]) sinkTaskContext.assignment().toArray());
+							sinkTaskContext.pause((TopicPartition[]) sinkTaskContext.assignment().toArray(new TopicPartition[sinkTaskContext.assignment().size()]));
 							pause = true;
 							Thread.sleep(sleepPeriod);
 							if (sleepCount++ > sleepCycles) {
@@ -192,7 +192,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 						}
 					}
 					if (pause)
-						sinkTaskContext.resume((TopicPartition[]) sinkTaskContext.assignment().toArray());
+						sinkTaskContext.resume((TopicPartition[]) sinkTaskContext.assignment().toArray(new TopicPartition[sinkTaskContext.assignment().size()]));
 				});
 				return true;
 			} else {
@@ -204,7 +204,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 				while (kinesisProducer.getOutstandingRecordsCount() > outstandingRecordsThreshold) {
 					try {
 						// Pausing further
-						sinkTaskContext.pause((TopicPartition[]) sinkTaskContext.assignment().toArray());
+						sinkTaskContext.pause((TopicPartition[]) sinkTaskContext.assignment().toArray(new TopicPartition[sinkTaskContext.assignment().size()]));
 						pause = true;
 						Thread.sleep(sleepPeriod);
 						if (sleepCount++ > sleepCycles) {
@@ -222,7 +222,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 					}
 				}
 				if (pause)
-					sinkTaskContext.resume((TopicPartition[]) sinkTaskContext.assignment().toArray());
+					sinkTaskContext.resume((TopicPartition[]) sinkTaskContext.assignment().toArray(new TopicPartition[sinkTaskContext.assignment().size()]));
 				return true;
 			}
 		} else {

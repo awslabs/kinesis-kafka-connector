@@ -1,5 +1,18 @@
-.classpath
+# mac
+.DS_Store
+
+# maven
+target
+
+# eclipse
 .project
-.settings/
-target/
-bin/
+.settings
+.classpath
+.metadata
+.recommenders
+
+# intellij
+.idea/
+*.iml
+*.iws
+*~

@@ -52,6 +52,14 @@
 				<version>2.3</version>
 				<configuration>
 					<createDependencyReducedPom>false</createDependencyReducedPom>
+	                <filters>
+	                    <filter>
+	                        <artifact>*:*</artifact>
+	                        <excludes>
+	                            <exclude>module-info.class</exclude>
+	                        </excludes>
+	                    </filter>
+                    </filters>
 				</configuration>
 				<executions>
 					<execution>

@@ -39,6 +39,11 @@ You can build the project by running "maven package" and it will build amazon-ki
 | connector.class      | Class for Amazon Kinesis Firehose Connector      |   com.amazon.kinesis.kafka.FirehoseSinkConnector |
 | topics | Kafka topics from where you want to consume messages. It can be single topic or comma separated list of topics      |   -  |
 | region| Specify region of your Kinesis Firehose | - |
+| kinesisEndpoint| Alternate Kinesis endpoint, such as for a NAT gateway (optional) | - |
+| roleARN | IAM Role ARN to assume (optional)| - |
+| roleSessionName | IAM Role session-name to be logged (optional)| - |
+| roleExternalID | IAM Role external-id (optional)| - |
+| roleDurationSeconds | Duration of STS assumeRole session (optional)| - |
 | batch | Connector batches messages before sending to Kinesis Firehose (true/false) | true |
 | batchSize | Number of messages to be batched together. Firehose accepts at max 500 messages in one batch. | 500 |
 | batchSizeInBytes | Message size in bytes when batched together. Firehose accepts at max 4MB in one batch. | 3670016 |
@@ -72,7 +77,12 @@ You can build the project by running "maven package" and it will build amazon-ki
 | connector.class      | Class for Amazon Kinesis Stream Connector      |   com.amazon.kinesis.kafka.AmazonKinesisSinkConnector |
 | topics | Kafka topics from where you want to consume messages. It can be single topic or comma separated list of topics      |   -  |
 | region| Specify region of your Kinesis Firehose | - |
+| kinesisEndpoint| Alternate Kinesis endpoint, such as for a NAT gateway (optional) | - |
 | streamName | Kinesis Stream Name.| - |
+| roleARN | IAM Role ARN to assume (optional)| - |
+| roleSessionName | IAM Role session-name to be logged (optional)| - |
+| roleExternalID | IAM Role external-id (optional)| - |
+| roleDurationSeconds | Duration of STS assumeRole session (optional)| - |
 | usePartitionAsHashKey | Using Kafka partition key as hash key for Kinesis streams.  | false |
 | maxBufferedTime | Maximum amount of time (milliseconds) a record may spend being buffered before it gets sent. Records may be sent sooner than this depending on the other buffering limits. Range: [100..... 9223372036854775807] | 15000 |
 | maxConnections | Maximum number of connections to open to the backend. HTTP requests are sent in parallel over multiple connections. Range: [1...256]. | 24 |

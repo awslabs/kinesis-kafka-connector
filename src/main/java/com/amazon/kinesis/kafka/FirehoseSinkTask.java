@@ -5,13 +5,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.amazonaws.util.StringUtils;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.RegionUtils;
 import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehoseClient;
 import com.amazonaws.services.kinesisfirehose.model.AmazonKinesisFirehoseException;
@@ -38,6 +38,16 @@ public class FirehoseSinkTask extends SinkTask {
 	private int batchSize;
 	
 	private int batchSizeInBytes;
+
+	private String roleARN;
+
+	private String roleExternalID;
+
+	private String roleSessionName;
+
+	private int roleDurationSeconds;
+
+	private String kinesisEndpoint;
 
 	@Override
 	public String version() {
@@ -69,9 +79,22 @@ public class FirehoseSinkTask extends SinkTask {
 		
 		deliveryStreamName = props.get(FirehoseSinkConnector.DELIVERY_STREAM);
 
-		firehoseClient = new AmazonKinesisFirehoseClient(new DefaultAWSCredentialsProviderChain());
+		roleARN = props.get(FirehoseSinkConnector.ROLE_ARN);
+
+		roleSessionName = props.get(FirehoseSinkConnector.ROLE_SESSION_NAME);
+
+		roleExternalID = props.get(FirehoseSinkConnector.ROLE_EXTERNAL_ID);
+
+		roleDurationSeconds = Integer.parseInt(props.get(FirehoseSinkConnector.ROLE_DURATION_SECONDS));
+
+		kinesisEndpoint = props.get(FirehoseSinkConnector.KINESIS_ENDPOINT);
+
+		firehoseClient = new AmazonKinesisFirehoseClient(IAMUtility.createCredentials(props.get(FirehoseSinkConnector.REGION), roleARN, roleExternalID, roleSessionName, roleDurationSeconds));
 
 		firehoseClient.setRegion(RegionUtils.getRegion(props.get(FirehoseSinkConnector.REGION)));
+
+		if (!StringUtils.isNullOrEmpty(kinesisEndpoint))
+			firehoseClient.setEndpoint(kinesisEndpoint);
 
 		// Validate delivery stream
 		validateDeliveryStream();
@@ -163,7 +186,6 @@ public class FirehoseSinkTask extends SinkTask {
 			putRecordRequest.setDeliveryStreamName(deliveryStreamName);
 			putRecordRequest.setRecord(DataUtility.createRecord(sinkRecord));
 			
-			PutRecordResult putRecordResult;
 			try {
 				firehoseClient.putRecord(putRecordRequest);
 			}catch(AmazonKinesisFirehoseException akfe){

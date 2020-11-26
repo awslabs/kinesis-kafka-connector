@@ -75,16 +75,18 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	private KinesisProducer kinesisProducer;
 
+	private DataException putException;
+
 	final FutureCallback<UserRecordResult> callback = new FutureCallback<UserRecordResult>() {
 		@Override
 		public void onFailure(Throwable t) {
 			if (t instanceof UserRecordFailedException) {
 				Attempt last = Iterables.getLast(((UserRecordFailedException) t).getResult().getAttempts());
-				throw new DataException("Kinesis Producer was not able to publish data - " + last.getErrorCode() + "-"
+				putException =  new DataException("Kinesis Producer was not able to publish data - " + last.getErrorCode() + "-"
 						+ last.getErrorMessage());
-
+				return;
 			}
-			throw new DataException("Exception during Kinesis put", t);
+			putException = new DataException("Exception during Kinesis put", t);
 		}
 
 		@Override
@@ -105,7 +107,10 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	@Override
 	public void flush(Map<TopicPartition, OffsetAndMetadata> arg0) {
-		// TODO Auto-generated method stub
+		if (putException != null) {
+			throw putException;
+		}
+
 		if (singleKinesisProducerPerPartition) {
 			producerMap.values().forEach(producer -> {
 				if (flushSync)
@@ -123,6 +128,9 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	@Override
 	public void put(Collection<SinkRecord> sinkRecords) {
+		if (putException != null) {
+			throw putException;
+		}
 
 		// If KinesisProducers cannot write to Kinesis Streams (because of
 		// connectivity issues, access issues
@@ -287,6 +295,8 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		if (!singleKinesisProducerPerPartition)
 			kinesisProducer = getKinesisProducer();
+
+		putException = null;
 
 	}
 

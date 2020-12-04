@@ -9,6 +9,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.errors.DataException;
+import org.apache.kafka.connect.errors.RetriableException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.apache.kafka.connect.sink.SinkTaskContext;
@@ -108,7 +109,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	@Override
 	public void flush(Map<TopicPartition, OffsetAndMetadata> arg0) {
 		if (putException != null) {
-			throw putException;
+			throw new RetriableException(putException);
 		}
 
 		if (singleKinesisProducerPerPartition) {
@@ -129,7 +130,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	@Override
 	public void put(Collection<SinkRecord> sinkRecords) {
 		if (putException != null) {
-			throw putException;
+			throw new RetriableException(putException);
 		}
 
 		// If KinesisProducers cannot write to Kinesis Streams (because of

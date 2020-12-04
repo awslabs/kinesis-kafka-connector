@@ -8,7 +8,7 @@ import com.amazonaws.util.StringUtils;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.connect.errors.DataException;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.RetriableException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
@@ -76,18 +76,18 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	private KinesisProducer kinesisProducer;
 
-	private DataException putException;
+	private ConnectException putException;
 
 	final FutureCallback<UserRecordResult> callback = new FutureCallback<UserRecordResult>() {
 		@Override
 		public void onFailure(Throwable t) {
 			if (t instanceof UserRecordFailedException) {
 				Attempt last = Iterables.getLast(((UserRecordFailedException) t).getResult().getAttempts());
-				putException =  new DataException("Kinesis Producer was not able to publish data - " + last.getErrorCode() + "-"
+				putException =  new RetriableException("Kinesis Producer was not able to publish data - " + last.getErrorCode() + "-"
 						+ last.getErrorMessage());
 				return;
 			}
-			putException = new DataException("Exception during Kinesis put", t);
+			putException = new RetriableException("Exception during Kinesis put", t);
 		}
 
 		@Override
@@ -109,7 +109,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	@Override
 	public void flush(Map<TopicPartition, OffsetAndMetadata> arg0) {
 		if (putException != null) {
-			throw new RetriableException(putException);
+			throw putException;
 		}
 
 		if (singleKinesisProducerPerPartition) {
@@ -130,7 +130,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	@Override
 	public void put(Collection<SinkRecord> sinkRecords) {
 		if (putException != null) {
-			throw new RetriableException(putException);
+			throw putException;
 		}
 
 		// If KinesisProducers cannot write to Kinesis Streams (because of

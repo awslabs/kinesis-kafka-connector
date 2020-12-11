@@ -8,7 +8,8 @@ import com.amazonaws.util.StringUtils;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.connect.errors.DataException;
+import org.apache.kafka.connect.errors.ConnectException;
+import org.apache.kafka.connect.errors.RetriableException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.apache.kafka.connect.sink.SinkTaskContext;
@@ -75,16 +76,18 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	private KinesisProducer kinesisProducer;
 
+	private ConnectException putException;
+
 	final FutureCallback<UserRecordResult> callback = new FutureCallback<UserRecordResult>() {
 		@Override
 		public void onFailure(Throwable t) {
 			if (t instanceof UserRecordFailedException) {
 				Attempt last = Iterables.getLast(((UserRecordFailedException) t).getResult().getAttempts());
-				throw new DataException("Kinesis Producer was not able to publish data - " + last.getErrorCode() + "-"
+				putException =  new RetriableException("Kinesis Producer was not able to publish data - " + last.getErrorCode() + "-"
 						+ last.getErrorMessage());
-
+				return;
 			}
-			throw new DataException("Exception during Kinesis put", t);
+			putException = new RetriableException("Exception during Kinesis put", t);
 		}
 
 		@Override
@@ -105,7 +108,8 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	@Override
 	public void flush(Map<TopicPartition, OffsetAndMetadata> arg0) {
-		// TODO Auto-generated method stub
+		checkForEarlierPutException();
+
 		if (singleKinesisProducerPerPartition) {
 			producerMap.values().forEach(producer -> {
 				if (flushSync)
@@ -123,6 +127,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	@Override
 	public void put(Collection<SinkRecord> sinkRecords) {
+		checkForEarlierPutException();
 
 		// If KinesisProducers cannot write to Kinesis Streams (because of
 		// connectivity issues, access issues
@@ -221,6 +226,18 @@ public class AmazonKinesisSinkTask extends SinkTask {
 		}
 	}
 
+	/**
+	 * Examine whether an exception was reported from an earlier call to <code>put</code>.
+	 * If so, then clear the exception and surface it up to Kafka Connect.
+	 */
+	private void checkForEarlierPutException() {
+		if (putException != null) {
+			final ConnectException e = putException;
+			putException = null;
+			throw e;
+		}
+	}
+
 	private ListenableFuture<UserRecordResult> addUserRecord(KinesisProducer kp, String streamName, String partitionKey,
 			boolean usePartitionAsHashKey, SinkRecord sinkRecord) {
 
@@ -287,6 +304,8 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		if (!singleKinesisProducerPerPartition)
 			kinesisProducer = getKinesisProducer();
+
+		putException = null;
 
 	}
 

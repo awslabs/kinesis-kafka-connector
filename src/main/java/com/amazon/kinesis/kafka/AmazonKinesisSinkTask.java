@@ -108,9 +108,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	@Override
 	public void flush(Map<TopicPartition, OffsetAndMetadata> arg0) {
-		if (putException != null) {
-			throw putException;
-		}
+		checkForEarlierPutException();
 
 		if (singleKinesisProducerPerPartition) {
 			producerMap.values().forEach(producer -> {
@@ -129,9 +127,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	@Override
 	public void put(Collection<SinkRecord> sinkRecords) {
-		if (putException != null) {
-			throw putException;
-		}
+		checkForEarlierPutException();
 
 		// If KinesisProducers cannot write to Kinesis Streams (because of
 		// connectivity issues, access issues
@@ -227,6 +223,18 @@ public class AmazonKinesisSinkTask extends SinkTask {
 			}
 		} else {
 			return true;
+		}
+	}
+
+	/**
+	 * Examine whether an exception was reported from an earlier call to <code>put</code>.
+	 * If so, then clear the exception and surface it up to Kafka Connect.
+	 */
+	private void checkForEarlierPutException() {
+		if (putException != null) {
+			final ConnectException e = putException;
+			putException = null;
+			throw e;
 		}
 	}
 

@@ -28,6 +28,10 @@ public class DataUtility {
 	 * @return Parsed bytebuffer as per schema type
 	 */
 	public static ByteBuffer parseValue(Schema schema, Object value) {
+		if (value == null) {
+			return null;
+		}
+		
 		Schema.Type t = schema.type();
 		switch (t) {
 		case INT8:
@@ -62,8 +66,10 @@ public class DataUtility {
 			try {
 				return ByteBuffer.wrap(((String) value).getBytes("UTF-8"));
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
 				System.out.println("Message cannot be translated:" + e.getLocalizedMessage());
+			} catch (Exception e) {
+				System.out.println("Unepxected error:" + e.getLocalizedMessage());
+				throw e;
 			}
 		case ARRAY:
 			Schema sch = schema.valueSchema();

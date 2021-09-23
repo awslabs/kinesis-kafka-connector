@@ -53,7 +53,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 	private String metricsNameSpace;
 
-	private boolean aggregration;
+	private boolean aggregation;
 
 	private boolean usePartitionAsHashKey;
 
@@ -267,7 +267,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 
 		metricsNameSpace = props.get(AmazonKinesisSinkConnector.METRICS_NAMESPACE);
 
-		aggregration = Boolean.parseBoolean(props.get(AmazonKinesisSinkConnector.AGGREGRATION_ENABLED));
+		aggregation = Boolean.parseBoolean(props.get(AmazonKinesisSinkConnector.AGGREGATION_ENABLED));
 
 		usePartitionAsHashKey = Boolean.parseBoolean(props.get(AmazonKinesisSinkConnector.USE_PARTITION_AS_HASH_KEY));
 
@@ -329,7 +329,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 		if (!StringUtils.isNullOrEmpty(kinesisEndpoint))
 			config.setKinesisEndpoint(kinesisEndpoint);
 
-		config.setAggregationEnabled(aggregration);
+		config.setAggregationEnabled(aggregation);
 
 		// Limits the maximum allowed put rate for a shard, as a percentage of
 		// the

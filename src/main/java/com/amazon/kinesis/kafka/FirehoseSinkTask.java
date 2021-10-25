@@ -5,23 +5,24 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import com.amazonaws.util.StringUtils;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 
-import com.amazonaws.regions.RegionUtils;
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
+import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
 import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehoseClient;
+import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehoseClientBuilder;
 import com.amazonaws.services.kinesisfirehose.model.AmazonKinesisFirehoseException;
 import com.amazonaws.services.kinesisfirehose.model.DescribeDeliveryStreamRequest;
 import com.amazonaws.services.kinesisfirehose.model.DescribeDeliveryStreamResult;
 import com.amazonaws.services.kinesisfirehose.model.PutRecordBatchRequest;
 import com.amazonaws.services.kinesisfirehose.model.PutRecordBatchResult;
 import com.amazonaws.services.kinesisfirehose.model.PutRecordRequest;
-import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
 import com.amazonaws.services.kinesisfirehose.model.Record;
+import com.amazonaws.util.StringUtils;
 
 /**
  * @author nehalmeh
@@ -31,7 +32,7 @@ public class FirehoseSinkTask extends SinkTask {
 
 	private String deliveryStreamName;
 
-	private AmazonKinesisFirehoseClient firehoseClient;
+	private AmazonKinesisFirehose firehoseClient;
 
 	private boolean batch;
 	
@@ -48,6 +49,8 @@ public class FirehoseSinkTask extends SinkTask {
 	private int roleDurationSeconds;
 
 	private String kinesisEndpoint;
+	
+	private String region;
 
 	@Override
 	public String version() {
@@ -88,13 +91,29 @@ public class FirehoseSinkTask extends SinkTask {
 		roleDurationSeconds = Integer.parseInt(props.get(FirehoseSinkConnector.ROLE_DURATION_SECONDS));
 
 		kinesisEndpoint = props.get(FirehoseSinkConnector.KINESIS_ENDPOINT);
+		
+		region = props.get(FirehoseSinkConnector.REGION);
 
-		firehoseClient = new AmazonKinesisFirehoseClient(IAMUtility.createCredentials(props.get(FirehoseSinkConnector.REGION), roleARN, roleExternalID, roleSessionName, roleDurationSeconds));
+		AmazonKinesisFirehoseClientBuilder builder = AmazonKinesisFirehoseClient.builder();
+		if (!StringUtils.isNullOrEmpty(kinesisEndpoint)) {
+			EndpointConfiguration endpointConfig = new EndpointConfiguration(kinesisEndpoint, region);
+			builder.withEndpointConfiguration(endpointConfig );
+		}else if (!StringUtils.isNullOrEmpty(region)) {
+			// you cannot set region AND endpoint.
+			builder.withRegion(region);
+		}
+		builder.withCredentials(IAMUtility.createCredentials(
+						region, 
+						roleARN, 
+						roleExternalID, 
+						roleSessionName, 
+						roleDurationSeconds));
+		
+		firehoseClient = builder.build();
+		
 
-		firehoseClient.setRegion(RegionUtils.getRegion(props.get(FirehoseSinkConnector.REGION)));
-
-		if (!StringUtils.isNullOrEmpty(kinesisEndpoint))
-			firehoseClient.setEndpoint(kinesisEndpoint);
+//		if (!StringUtils.isNullOrEmpty(kinesisEndpoint))
+//			firehoseClient.setEndpoint(kinesisEndpoint);
 
 		// Validate delivery stream
 		validateDeliveryStream();

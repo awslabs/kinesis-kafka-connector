@@ -76,7 +76,7 @@ You can build the project by running "maven package" and it will build amazon-ki
 | name     | User defined name of connector  | - |
 | connector.class      | Class for Amazon Kinesis Stream Connector      |   com.amazon.kinesis.kafka.AmazonKinesisSinkConnector |
 | topics | Kafka topics from where you want to consume messages. It can be single topic or comma separated list of topics      |   -  |
-| region| Specify region of your Kinesis Firehose | - |
+| region| Specify region of your Kinesis Firehose. Note, this parameter is mandatory, if `kinesisEndpoint` is provided | - |
 | kinesisEndpoint| Alternate Kinesis endpoint, such as for a NAT gateway (optional) | - |
 | streamName | Kinesis Stream Name.| - |
 | roleARN | IAM Role ARN to assume (optional)| - |

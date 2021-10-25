@@ -112,9 +112,6 @@ public class FirehoseSinkTask extends SinkTask {
 		firehoseClient = builder.build();
 		
 
-//		if (!StringUtils.isNullOrEmpty(kinesisEndpoint))
-//			firehoseClient.setEndpoint(kinesisEndpoint);
-
 		// Validate delivery stream
 		validateDeliveryStream();
 	}

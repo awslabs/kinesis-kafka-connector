@@ -83,11 +83,9 @@
 						<manifest>
 							<addClasspath>false</addClasspath>
 						</manifest>
-						<!--
 						<manifestEntries>
 							<Class-Path>libs/</Class-Path>
 						</manifestEntries>
-						-->
 					</archive>
 				</configuration>
 			</plugin>

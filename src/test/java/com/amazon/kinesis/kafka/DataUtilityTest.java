@@ -1,11 +1,12 @@
 package com.amazon.kinesis.kafka;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
-import org.testng.annotations.Test;
-import org.testng.Assert;
+import org.junit.jupiter.api.Test;
 
 public class DataUtilityTest {
 	
@@ -16,7 +17,7 @@ public class DataUtilityTest {
 		ByteBuffer actual = DataUtility.parseValue(schema, (byte) 2);
 		ByteBuffer expected = ByteBuffer.allocate(1).put((byte) 2);
 		
-		Assert.assertTrue(actual.equals(expected));
+		assertTrue(actual.equals(expected));
 		
 	}
 	
@@ -27,7 +28,7 @@ public class DataUtilityTest {
 		ByteBuffer actual = DataUtility.parseValue(schema, (short) 2);
 		ByteBuffer expected = ByteBuffer.allocate(2).putShort((short) 2);
 		
-		Assert.assertTrue(actual.equals(expected));
+		assertTrue(actual.equals(expected));
 	
 	}
 	
@@ -38,7 +39,7 @@ public class DataUtilityTest {
 		ByteBuffer actualInt32 = DataUtility.parseValue(schemaInt32, (int) 2);
 		ByteBuffer expectedInt32 = ByteBuffer.allocate(4).putInt( (int) 2);
 		
-		Assert.assertTrue(actualInt32.equals(expectedInt32));
+		assertTrue(actualInt32.equals(expectedInt32));
 	}
 	
 	@Test
@@ -48,7 +49,7 @@ public class DataUtilityTest {
 		ByteBuffer actual = DataUtility.parseValue(schema, (long) 2);
 		ByteBuffer expected = ByteBuffer.allocate(8).putLong( (long) 2);
 		
-		Assert.assertTrue(actual.equals(expected));
+		assertTrue(actual.equals(expected));
 		
 	}
 	
@@ -59,7 +60,7 @@ public class DataUtilityTest {
 		ByteBuffer actual = DataUtility.parseValue(schema, (float) 2);
 		ByteBuffer expected = ByteBuffer.allocate(4).putFloat((float) 2);
 		
-		Assert.assertTrue(actual.equals(expected));
+		assertTrue(actual.equals(expected));
 		
 	}
 	
@@ -70,7 +71,7 @@ public class DataUtilityTest {
 		ByteBuffer actual = DataUtility.parseValue(schema, (double) 2);
 		ByteBuffer expected = ByteBuffer.allocate(8).putDouble((double) 2);
 		
-		Assert.assertTrue(actual.equals(expected));
+		assertTrue(actual.equals(expected));
 		
 	}
 	
@@ -81,7 +82,7 @@ public class DataUtilityTest {
 		ByteBuffer actual = DataUtility.parseValue(schema, (boolean) true);
 		ByteBuffer expected = ByteBuffer.allocate(1).put( (byte) 1);
 		
-		Assert.assertTrue(actual.equals(expected));
+		assertTrue(actual.equals(expected));
 	}
 	
 	@Test
@@ -97,7 +98,7 @@ public class DataUtilityTest {
 			e.printStackTrace();
 		}
 		
-		Assert.assertTrue(actual.equals(expected));
+		assertTrue(actual.equals(expected));
 
 	}
 	
@@ -111,7 +112,7 @@ public class DataUtilityTest {
 		ByteBuffer actual = DataUtility.parseValue(schema, arrayOfInt8);
 		ByteBuffer expected = ByteBuffer.allocate(4).put((byte) 1).put( (byte) 2).put( (byte) 3).put( (byte) 4);
 		
-		Assert.assertTrue(actual.equals(expected));
+		assertTrue(actual.equals(expected));
 		
 	}
 	
@@ -124,7 +125,7 @@ public class DataUtilityTest {
 		ByteBuffer actual = DataUtility.parseValue(schema, value);
 		ByteBuffer expected = ByteBuffer.wrap("Kinesis-Kafka Connector".getBytes());
 		
-		Assert.assertTrue(actual.equals(expected));
+		assertTrue(actual.equals(expected));
 	}
 
 }

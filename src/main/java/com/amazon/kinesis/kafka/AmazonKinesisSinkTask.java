@@ -320,8 +320,11 @@ public class AmazonKinesisSinkTask extends SinkTask {
 	public void close(Collection<TopicPartition> partitions) {
 		if (singleKinesisProducerPerPartition) {
 			for (TopicPartition topicPartition : partitions) {
-				producerMap.get(topicPartition.partition() + "@" + topicPartition.topic()).destroy();
-				producerMap.remove(topicPartition.partition() + "@" + topicPartition.topic());
+				String producerName = topicPartition.partition() + "@" + topicPartition.topic();
+				if (producerMap.containsKey(producerName)) {
+					producerMap.get(producerName).destroy();
+					producerMap.remove(producerName);
+				}
 			}
 		}
 	}
@@ -335,6 +338,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 				kp.destroy();
 			}
 		} else {
+			kinesisProducer.flushSync();
 			kinesisProducer.destroy();
 		}
 
